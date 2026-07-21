@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#102419">
+  <title>校园漫游地图</title>
+  <link rel="stylesheet" href="css/styles.css?v=19">
+  <style>
+    .places-panel{background:#0d1326;color:#c7cbe0;border-left:1px solid #202944;padding:28px 22px}.panel-heading h2{color:#f5f6ff;font-size:22px}.panel-intro{color:#8e96b5;margin:8px 0 18px}.places-list{border-top:0}.place-item{gap:12px;padding:14px 10px;color:#cbd0e4;border:0;border-radius:9px}.place-item::before{width:12px;height:12px;background:#6ee7c1}.place-item small{margin-left:auto;color:#959dbb;font-size:13px}.place-item:hover,.place-item.active{background:#161e36;color:#fff}.place-item[data-category="service"]::before{background:#ffd32a}.place-item[data-category="residence"]::before{background:#9d82f4}.place-item[data-category="dining"]::before{background:#ffae4d}.place-item[data-category="sports"]::before{background:#5d9eff}.place-item[data-category="landscape"]::before{background:#ee6eaf}.place-item[data-category="entrance"]::before{background:#ef6588}.places-panel .eyebrow{color:#6ee7c1}.panel-close{color:#e9ecf8}@media(max-width:800px){.places-panel{background:#0d1326}.panel-heading h2{color:#f5f6ff}.panel-close{color:#f5f6ff}}
+  </style>
+  <style>
+    /* 保留并展示上传照片的原始像素尺寸；大图在画廊内滚动查看，不进行 CSS 缩放或裁剪。 */
+    .gallery-image-wrap{display:block;overflow:auto}
+    .gallery-image-wrap img{display:block;width:auto;height:auto;max-width:none;max-height:none;object-fit:initial}
+  </style>
+  <style>
+    .map-header{padding:14px 28px 34px;background:linear-gradient(180deg,#090a14ed,transparent)}
+    .map-brand{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+    .map-header h1{margin:0;color:#f2f2ff;font-size:18px}
+    .map-credit{margin:0;color:#ff4141;font-size:12px}
+    .map-header .map-hint{margin-top:6px}
+    @media(max-width:800px){.map-header{padding:13px 16px 35px}.map-brand{display:block;white-space:normal}.map-header h1{font-size:15px}.map-credit{margin-top:4px;font-size:10px;line-height:1.45}.map-header .map-hint{font-size:10px}}
+  </style>
+  <style>
+    .map-shortcuts{position:absolute;z-index:4;left:50%;bottom:26px;transform:translateX(-50%);display:flex;gap:24px;padding:14px 22px;border-radius:16px;background:#0d1326dd;box-shadow:0 8px 24px #07100d44}
+    .map-shortcut{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#e5e8f7;font:700 18px "Microsoft YaHei",sans-serif;cursor:pointer}.map-shortcut::before{content:"";width:15px;height:15px;border-radius:50%;background:#ffae4d}.map-shortcut.residence::before{background:#9d82f4}.map-shortcut:hover{color:#fff;transform:translateY(-1px)}
+    @media(max-width:800px){.map-shortcuts{bottom:18px;gap:16px;padding:11px 16px}.map-shortcut{font-size:14px}.map-shortcut::before{width:12px;height:12px}}
+  </style>
+  <style>
+    .gallery-content{width:min(1500px,96vw);height:96dvh;max-height:none;padding:20px;display:flex;flex-direction:column}
+    .gallery-content h2{flex:0 0 auto;margin-bottom:12px}.gallery-image-wrap{position:relative;flex:1;min-height:0;height:auto;display:grid;place-items:center;overflow:hidden}
+    .gallery-image-wrap img{position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+    .gallery-footer{flex:0 0 auto}
+    @media(max-width:800px){.gallery-content{width:100vw;height:100dvh;padding:18px;border-radius:0}.gallery-image-wrap{height:auto}}
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="map-stage" aria-label="校园互动地图">
+      <header class="map-header">
+        <div class="map-brand"><h1>🏫 西华师范大学 · 华凤校区二期</h1><p class="map-credit">本地图全区由抖音：月弥完成，版权归创作者所有，凡是被非原作者用来引流收费的必定追究法律责任</p></div>
+        <p class="map-hint">拖动浏览 · 滚轮缩放 · 悬停查看地点简介</p>
+      </header>
+
+      <div id="mapViewport" class="map-viewport">
+        <div id="mapCanvas" class="map-canvas">
+          <img class="map-image" src="assets/campus-map-landscape.png" alt="横向校园总览地图">
+          <svg id="hotspotLayer" class="hotspot-layer" viewBox="0 0 3308 1080" aria-label="可点击的校园地点名牌"></svg>
+        </div>
+      </div>
+      <div id="mapTooltip" class="map-tooltip" role="tooltip" hidden></div>
+      <div class="map-shortcuts" aria-label="校园生活分类">
+        <button type="button" class="map-shortcut dining" data-collection="dining">餐厅超市</button>
+        <button type="button" class="map-shortcut residence" data-collection="residence">寝室</button>
+      </div>
+
+      <div class="map-controls" aria-label="地图控制">
+        <button type="button" data-action="zoom-in" aria-label="放大地图">+</button>
+        <button type="button" data-action="zoom-out" aria-label="缩小地图">−</button>
+        <button type="button" data-action="reset" aria-label="重置地图">↺</button>
+      </div>
+      <button id="mobilePlacesButton" class="mobile-places-button" type="button" aria-controls="placesPanel" aria-expanded="false">地点目录 <span>⌄</span></button>
+    </section>
+
+    <aside id="placesPanel" class="places-panel" aria-label="地点目录">
+      <div class="panel-heading">
+        <div><p class="eyebrow">EXPLORE</p><h2>地点目录</h2></div>
+        <button id="mobilePanelClose" class="panel-close" type="button" aria-label="关闭地点目录">×</button>
+      </div>
+      <p class="panel-intro">悬停查看地点名；点击进入实景图集。</p>
+      <nav id="placesList" class="places-list" aria-label="校园地点"></nav>
+      <section id="placeDetail" class="place-detail" aria-live="polite"></section>
+    </aside>
+  </main>
+
+  <dialog id="gallery" class="gallery" aria-label="地点图片画廊">
+    <div class="gallery-backdrop" data-action="close-gallery"></div>
+    <div class="gallery-content">
+      <button class="gallery-close" type="button" data-action="close-gallery" aria-label="关闭画廊">×</button>
+      <p id="galleryCategory" class="eyebrow"></p>
+      <h2 id="galleryTitle"></h2>
+      <div class="gallery-image-wrap"><img id="galleryImage" alt=""></div>
+      <div class="gallery-footer"><span id="galleryCounter"></span><div>
+        <button type="button" data-action="previous-image" aria-label="上一张图片">←</button>
+        <button type="button" data-action="next-image" aria-label="下一张图片">→</button>
+      </div></div>
+    </div>
+  </dialog>
+  <script src="js/locations.js?v=19"></script>
+  <script src="js/app.js?v=19"></script>
+</body>
+</html>
