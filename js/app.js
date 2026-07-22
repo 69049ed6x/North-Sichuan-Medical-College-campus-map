@@ -15,6 +15,16 @@
   const galleryCounter = document.querySelector('#galleryCounter');
   let selectedLocation = null, galleryImages = [], galleryIndex = 0;
   let scale = 1, x = 0, y = 0, drag = null, pinchDistance = 0;
+  const warmedImages = new Set();
+
+  function warmImage(source) {
+    if (!source || warmedImages.has(source)) return;
+    const image = new Image();
+    image.decoding = 'async';
+    image.fetchPriority = 'low';
+    image.src = source;
+    warmedImages.add(source);
+  }
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
   const categories = {
@@ -48,6 +58,7 @@
     tooltip.style.top = `${Math.max(padding, top)}px`;
   }
   function showTooltip(location, event) {
+    warmImage(location.images?.[0]);
     tooltip.textContent = location.name;
     setActive(location.id);
     moveTooltip(event, true);
@@ -65,6 +76,9 @@
     const imagePath = galleryImages[galleryIndex];
     document.querySelector('.gallery-image-wrap').classList.toggle('empty', !imagePath);
     galleryImage.hidden = !imagePath;
+    galleryImage.loading = 'eager';
+    galleryImage.decoding = 'async';
+    galleryImage.fetchPriority = 'high';
     galleryImage.src = imagePath || '';
     galleryImage.alt = imagePath ? `${selectedLocation.name} 实景照片 ${galleryIndex + 1}` : '';
     galleryCounter.textContent = imagePath ? `${galleryIndex + 1} / ${galleryImages.length}` : '图片区暂为空';
@@ -127,6 +141,10 @@
   document.querySelectorAll('[data-action="close-gallery"]').forEach(button => button.addEventListener('click', () => gallery.close()));
   document.querySelector('[data-action="previous-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length; renderGalleryImage(); });
   document.querySelector('[data-action="next-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex + 1) % galleryImages.length; renderGalleryImage(); });
+  galleryImage.addEventListener('load', () => {
+    const nextImage = galleryImages[(galleryIndex + 1) % galleryImages.length];
+    if (galleryImages.length > 1) warmImage(nextImage);
+  });
   galleryImage.addEventListener('error', () => { galleryImage.hidden = true; galleryCounter.textContent = '图片区暂为空'; });
   window.addEventListener('resize', fitMap); fitMap();
 })();
