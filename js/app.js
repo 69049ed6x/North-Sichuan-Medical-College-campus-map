@@ -21,7 +21,7 @@
     'outdoor-pool': ['运动场地', 'sports'], 'yuqiu-center': ['运动场地', 'sports'], 'second-track-field': ['运动场地', 'sports'], 'first-track-field': ['运动场地', 'sports'],
     'east-lake': ['景观广场', 'landscape'], 'west-lake': ['景观广场', 'landscape'], 'north-lake': ['景观广场', 'landscape'], 'hongyi-square': ['景观广场', 'landscape'], 'botanical-garden': ['景观广场', 'landscape'],
     'east-gate': ['校园入口', 'entrance'], 'west-gate': ['校园入口', 'entrance'], 'north-gate': ['校园入口', 'entrance'],
-    'school-clinic': ['生活服务', 'service'], 'talent-apartment': ['住宿生活', 'residence'], 'graduate-apartment': ['住宿生活', 'residence'], 'keyuan-restaurant': ['餐饮服务', 'dining'], 'yayuan-restaurant': ['餐饮服务', 'dining'], 'ruiyuan-restaurant': ['餐饮服务', 'dining'],
+    'school-clinic': ['生活服务', 'service'], 'ruiyuan-basketball-court': ['运动场地', 'sports'], 'talent-apartment': ['住宿生活', 'residence'], 'graduate-apartment': ['住宿生活', 'residence'], 'keyuan-restaurant': ['餐饮服务', 'dining'], 'yayuan-restaurant': ['餐饮服务', 'dining'], 'ruiyuan-restaurant': ['餐饮服务', 'dining'],
     'siyuan-building': ['教学建筑', 'academic'], 'administration': ['行政服务', 'service'], 'affairs-center': ['行政服务', 'service']
   };
   const categoryFor = location => categories[location.id] || ['教学建筑', 'academic'];
