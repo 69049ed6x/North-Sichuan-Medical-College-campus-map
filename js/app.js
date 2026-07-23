@@ -43,7 +43,14 @@
     y = (rect.height - 1080 * scale) / 2;
     renderMap();
   }
-  function renderMap() { canvas.style.transform = `translate(${x}px, ${y}px) scale(${scale})`; }
+  let frame = null;
+  function renderMap() {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      canvas.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    });
+  }
   function setActive(id) { document.querySelectorAll('.place-item').forEach(item => item.classList.toggle('active', item.dataset.id === id)); }
   function hideTooltip() { tooltip.hidden = true; setActive(null); }
   function moveTooltip(event, force = false) {
@@ -87,6 +94,8 @@
     document.querySelectorAll('[data-action="previous-image"],[data-action="next-image"]').forEach(button => { button.hidden = galleryImages.length < 2; });
   }
 
+  const hotspotFragment = document.createDocumentFragment();
+  const placeFragment = document.createDocumentFragment();
   locations.forEach(location => {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     group.classList.add('hotspot'); group.dataset.id = location.id;
@@ -96,7 +105,7 @@
     group.addEventListener('pointermove', moveTooltip);
     group.addEventListener('pointerleave', hideTooltip);
     group.addEventListener('click', event => { event.stopPropagation(); hideTooltip(); openGallery(location); });
-    layer.append(group);
+    hotspotFragment.append(group);
 
     const item = document.createElement('button');
     item.type = 'button'; item.className = 'place-item'; item.dataset.id = location.id;
@@ -110,8 +119,10 @@
     item.addEventListener('focus', () => setActive(location.id));
     item.addEventListener('blur', hideTooltip);
     item.addEventListener('click', () => { hideTooltip(); openGallery(location); panel.classList.remove('open'); mobileButton.setAttribute('aria-expanded', 'false'); });
-    placesList.append(item);
+    placeFragment.append(item);
   });
+  layer.append(hotspotFragment);
+  placesList.append(placeFragment);
 
   function zoomAt(clientX, clientY, nextScale) {
     const rect = viewport.getBoundingClientRect(), oldScale = scale;
@@ -158,6 +169,10 @@
     const nextImage = galleryImages[(galleryIndex + 1) % galleryImages.length];
     if (galleryImages.length > 1) warmImage(nextImage);
   });
-  galleryImage.addEventListener('error', () => { galleryImage.hidden = true; galleryCounter.textContent = '图片区暂为空'; });
-  window.addEventListener('resize', fitMap); fitMap();
+  galleryImage.addEventListener('error', () => { galleryImageWrap.classList.remove('loading'); galleryImage.hidden = true; galleryCounter.textContent = '图片区暂为空'; });
+  let resizeFrame = null;
+  window.addEventListener('resize', () => {
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(() => { resizeFrame = null; fitMap(); });
+  }); fitMap();
 })();
