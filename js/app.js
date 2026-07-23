@@ -12,6 +12,7 @@
   const galleryTitle = document.querySelector('#galleryTitle');
   const galleryCategory = document.querySelector('#galleryCategory');
   const galleryImage = document.querySelector('#galleryImage');
+  const galleryImageWrap = document.querySelector('.gallery-image-wrap');
   const galleryCounter = document.querySelector('#galleryCounter');
   let selectedLocation = null, galleryImages = [], galleryIndex = 0;
   let scale = 1, x = 0, y = 0, drag = null, pinchDistance = 0;
@@ -74,7 +75,8 @@
   }
   function renderGalleryImage() {
     const imagePath = galleryImages[galleryIndex];
-    document.querySelector('.gallery-image-wrap').classList.toggle('empty', !imagePath);
+    galleryImageWrap.classList.toggle('empty', !imagePath);
+    galleryImageWrap.classList.toggle('loading', Boolean(imagePath));
     galleryImage.hidden = !imagePath;
     galleryImage.loading = 'eager';
     galleryImage.decoding = 'async';
@@ -90,6 +92,7 @@
     group.classList.add('hotspot'); group.dataset.id = location.id;
     group.innerHTML = `<rect class="area" x="${location.x}" y="${location.y}" width="${location.width}" height="${location.height}"></rect>`;
     group.addEventListener('pointerenter', event => showTooltip(location, event));
+    group.addEventListener('pointerdown', () => warmImage(location.images?.[0]));
     group.addEventListener('pointermove', moveTooltip);
     group.addEventListener('pointerleave', hideTooltip);
     group.addEventListener('click', event => { event.stopPropagation(); hideTooltip(); openGallery(location); });
@@ -101,6 +104,7 @@
     item.dataset.category = categoryClass;
     item.innerHTML = `<span>${location.name}</span><small>${category}</small>`;
     item.addEventListener('pointerenter', event => showTooltip(location, event));
+    item.addEventListener('pointerdown', () => warmImage(location.images?.[0]));
     item.addEventListener('pointermove', moveTooltip);
     item.addEventListener('pointerleave', hideTooltip);
     item.addEventListener('focus', () => setActive(location.id));
@@ -134,14 +138,23 @@
   document.querySelector('[data-action="zoom-in"]').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, scale * 1.25); });
   document.querySelector('[data-action="zoom-out"]').addEventListener('click', () => { const r = viewport.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, scale / 1.25); });
   document.querySelector('[data-action="reset"]').addEventListener('click', fitMap);
-  document.querySelector('[data-collection="dining"]').addEventListener('click', () => openGallery(collections.dining));
-  document.querySelector('[data-collection="residence"]').addEventListener('click', () => openGallery(collections.residence));
+  const collectionButtons = [
+    [document.querySelector('[data-collection="dining"]'), collections.dining],
+    [document.querySelector('[data-collection="residence"]'), collections.residence]
+  ];
+  collectionButtons.forEach(([button, collection]) => {
+    const warmCollection = () => warmImage(collection.images[0]);
+    button.addEventListener('pointerenter', warmCollection);
+    button.addEventListener('pointerdown', warmCollection);
+    button.addEventListener('click', () => openGallery(collection));
+  });
   mobileButton.addEventListener('click', () => { const opened = panel.classList.toggle('open'); mobileButton.setAttribute('aria-expanded', String(opened)); });
   document.querySelector('#mobilePanelClose').addEventListener('click', () => { panel.classList.remove('open'); mobileButton.setAttribute('aria-expanded', 'false'); });
   document.querySelectorAll('[data-action="close-gallery"]').forEach(button => button.addEventListener('click', () => gallery.close()));
   document.querySelector('[data-action="previous-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length; renderGalleryImage(); });
   document.querySelector('[data-action="next-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex + 1) % galleryImages.length; renderGalleryImage(); });
   galleryImage.addEventListener('load', () => {
+    galleryImageWrap.classList.remove('loading');
     const nextImage = galleryImages[(galleryIndex + 1) % galleryImages.length];
     if (galleryImages.length > 1) warmImage(nextImage);
   });
