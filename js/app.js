@@ -66,7 +66,6 @@
     tooltip.style.top = `${Math.max(padding, top)}px`;
   }
   function showTooltip(location, event) {
-    warmImage(location.images?.[0]);
     tooltip.textContent = location.name;
     setActive(location.id);
     moveTooltip(event, true);
@@ -101,7 +100,6 @@
     group.classList.add('hotspot'); group.dataset.id = location.id;
     group.innerHTML = `<rect class="area" x="${location.x}" y="${location.y}" width="${location.width}" height="${location.height}"></rect>`;
     group.addEventListener('pointerenter', event => showTooltip(location, event));
-    group.addEventListener('pointerdown', () => warmImage(location.images?.[0]));
     group.addEventListener('pointermove', moveTooltip);
     group.addEventListener('pointerleave', hideTooltip);
     group.addEventListener('click', event => { event.stopPropagation(); hideTooltip(); openGallery(location); });
@@ -113,7 +111,6 @@
     item.dataset.category = categoryClass;
     item.innerHTML = `<span>${location.name}</span><small>${category}</small>`;
     item.addEventListener('pointerenter', event => showTooltip(location, event));
-    item.addEventListener('pointerdown', () => warmImage(location.images?.[0]));
     item.addEventListener('pointermove', moveTooltip);
     item.addEventListener('pointerleave', hideTooltip);
     item.addEventListener('focus', () => setActive(location.id));
@@ -154,9 +151,6 @@
     [document.querySelector('[data-collection="residence"]'), collections.residence]
   ];
   collectionButtons.forEach(([button, collection]) => {
-    const warmCollection = () => warmImage(collection.images[0]);
-    button.addEventListener('pointerenter', warmCollection);
-    button.addEventListener('pointerdown', warmCollection);
     button.addEventListener('click', () => openGallery(collection));
   });
   mobileButton.addEventListener('click', () => { const opened = panel.classList.toggle('open'); mobileButton.setAttribute('aria-expanded', String(opened)); });
