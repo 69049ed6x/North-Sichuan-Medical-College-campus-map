@@ -14,7 +14,7 @@
   const galleryImage = document.querySelector('#galleryImage');
   const galleryImageWrap = document.querySelector('.gallery-image-wrap');
   const galleryCounter = document.querySelector('#galleryCounter');
-  let selectedLocation = null, galleryImages = [], galleryIndex = 0;
+  let selectedLocation = null, galleryImages = [], galleryIndex = 0, pendingImagePath = '';
   let scale = 1, x = 0, y = 0, drag = null, pinchDistance = 0;
   const warmedImages = new Set();
 
@@ -81,16 +81,33 @@
   }
   function renderGalleryImage() {
     const imagePath = galleryImages[galleryIndex];
+    pendingImagePath = imagePath || '';
     galleryImageWrap.classList.toggle('empty', !imagePath);
     galleryImageWrap.classList.toggle('loading', Boolean(imagePath));
-    galleryImage.hidden = !imagePath;
-    galleryImage.loading = 'eager';
-    galleryImage.decoding = 'async';
-    galleryImage.fetchPriority = 'high';
-    galleryImage.src = imagePath || '';
+    galleryImage.hidden = true;
+    galleryImage.removeAttribute('src');
     galleryImage.alt = imagePath ? `${selectedLocation.name} 实景照片 ${galleryIndex + 1}` : '';
     galleryCounter.textContent = imagePath ? `${galleryIndex + 1} / ${galleryImages.length}` : '图片区暂为空';
     document.querySelectorAll('[data-action="previous-image"],[data-action="next-image"]').forEach(button => { button.hidden = galleryImages.length < 2; });
+    if (!imagePath) return;
+
+    const image = new Image();
+    image.decoding = 'async';
+    image.fetchPriority = 'high';
+    image.onload = () => {
+      if (pendingImagePath !== imagePath) return;
+      galleryImage.src = imagePath;
+      galleryImage.hidden = false;
+      galleryImageWrap.classList.remove('loading');
+      const nextImage = galleryImages[(galleryIndex + 1) % galleryImages.length];
+      if (galleryImages.length > 1) warmImage(nextImage);
+    };
+    image.onerror = () => {
+      if (pendingImagePath !== imagePath) return;
+      galleryImageWrap.classList.remove('loading');
+      galleryCounter.textContent = '图片区暂为空';
+    };
+    image.src = imagePath;
   }
 
   const hotspotFragment = document.createDocumentFragment();
@@ -158,12 +175,6 @@
   document.querySelectorAll('[data-action="close-gallery"]').forEach(button => button.addEventListener('click', () => gallery.close()));
   document.querySelector('[data-action="previous-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length; renderGalleryImage(); });
   document.querySelector('[data-action="next-image"]').addEventListener('click', () => { if (galleryImages.length < 2) return; galleryIndex = (galleryIndex + 1) % galleryImages.length; renderGalleryImage(); });
-  galleryImage.addEventListener('load', () => {
-    galleryImageWrap.classList.remove('loading');
-    const nextImage = galleryImages[(galleryIndex + 1) % galleryImages.length];
-    if (galleryImages.length > 1) warmImage(nextImage);
-  });
-  galleryImage.addEventListener('error', () => { galleryImageWrap.classList.remove('loading'); galleryImage.hidden = true; galleryCounter.textContent = '图片区暂为空'; });
   let resizeFrame = null;
   window.addEventListener('resize', () => {
     if (resizeFrame) return;
